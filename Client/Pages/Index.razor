@@ -1,0 +1,37 @@
+﻿@page "/"
+@using System.IO;
+@using System.Threading
+@using System.Net.Http.Headers
+
+@inject HttpClient client
+
+<h1>Please upload new file to the hosted server</h1>
+<InputFile OnChange="@SendData" />
+<div>
+    <img src="@imageData" width="200" />
+</div>
+
+
+@code {
+    private string imageData;
+
+    private async Task SendData(InputFileChangeEventArgs eventArgs)
+    {
+        var file = eventArgs.File;
+
+        var content = new MultipartFormDataContent();
+        content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
+        content.Add(new StreamContent(file.OpenReadStream(), Convert.ToInt32(file.Size)), "file", file.Name);
+        await client.PostAsync("WeatherForecast", content);
+        await LoadImage(file);
+    }
+
+    async Task LoadImage(IBrowserFile file)
+    {
+        long maxFileSize = 1024 * 1024 * 15;
+        using var fileStream = file.OpenReadStream(maxFileSize);
+        using var memoryStream = new MemoryStream();
+        await fileStream.CopyToAsync(memoryStream);
+        imageData = $"data:png;base64,{Convert.ToBase64String(memoryStream.ToArray())}";
+    }
+}
