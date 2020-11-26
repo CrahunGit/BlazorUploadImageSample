@@ -8,12 +8,14 @@
 <h1>Please upload new file to the hosted server</h1>
 <InputFile OnChange="@SendData" />
 <div>
-    <img src="@imageData" width="200" />
+    <Virtualize Items="imageData" Context="data">        
+        <img src="@data" width="200" />        
+    </Virtualize>
 </div>
 
 
 @code {
-    private string imageData;
+    private List<string> imageData = new List<string>();
 
     private async Task SendData(InputFileChangeEventArgs eventArgs)
     {
@@ -22,7 +24,7 @@
         var content = new MultipartFormDataContent();
         content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
         content.Add(new StreamContent(file.OpenReadStream(), Convert.ToInt32(file.Size)), "file", file.Name);
-        await client.PostAsync("WeatherForecast", content);
+        await client.PostAsync("Images", content);
         await LoadImage(file);
     }
 
@@ -32,6 +34,6 @@
         using var fileStream = file.OpenReadStream(maxFileSize);
         using var memoryStream = new MemoryStream();
         await fileStream.CopyToAsync(memoryStream);
-        imageData = $"data:png;base64,{Convert.ToBase64String(memoryStream.ToArray())}";
+        imageData.Add($"data:png;base64,{Convert.ToBase64String(memoryStream.ToArray())}");
     }
 }
